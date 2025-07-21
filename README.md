@@ -29,22 +29,31 @@ Before we write any AI code, we need to get your computer ready to understand an
 ##### For macOS:
 1.	Open your Terminal application. You can find it by searching "Terminal" in Spotlight (Cmd + Space, then type "Terminal").
 2.	Install Homebrew: Homebrew is a "package manager" for macOS, which makes installing other software (like Python) much easier. Paste this command into your Terminal and press Enter:
-Bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        Bash
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  	
 Follow any on-screen instructions (you might need to press Enter or type your computer's password).
+
 3.	Install Python using Homebrew: Once Homebrew is installed, paste this command into your Terminal and press Enter:
-Bash
-brew install python
+
+  	    Bash
+  	    brew install python
+       
 This will download and install the latest Python 3 version.
 ##### For Linux (e.g., Ubuntu/Debian):
 1.	Open your Terminal.
 2.	First, update your computer's list of available software:
-Bash
-sudo apt update
+
+        Bash
+        sudo apt update
+  	
 (You might need to enter your computer's password).
 3.	Then, install Python 3 and pip (which we'll use to install other Python tools):
-Bash
-sudo apt install python3 python3-pip
+
+        Bash
+        sudo apt install python3 python3-pip
+        
 ### 0.2. Verifying Your Python Installation:
 •	This step confirms that Python is correctly installed and your computer can find it.
 
@@ -52,13 +61,14 @@ sudo apt install python3 python3-pip
 
 •	Type these commands one by one and press Enter after each:
 
-Bash
-python --version
-python3 --version
-pip --version
-pip3 --version
+        Bash
+        python --version
+        python3 --version
+        pip --version
+        pip3 --version
 
 •	What to look for: You should see something like Python 3.10.12 or similar, and pip followed by a version number. If one command doesn't work (e.g., python --version says "command not found"), try the other (e.g., python3 --version). For pip, usually pip works, but sometimes pip3 is necessary. The key is that at least one of each (python and pip) gives you a version number.
+
 ### 0.3. Creating Your Project Folder:
 •	It's good practice to keep all files related to a project in one organized folder.
 
@@ -68,8 +78,9 @@ pip3 --version
 
 •	Inside my_chatbot_project, create another new folder and name it my_documents. This is where you'll put the actual files that your chatbot will learn from.
 Your folder structure should look like this (like a nested set of boxes):
-my_chatbot_project/  <-- This is your main project box
-└── my_documents/    <-- This inner box holds your text files, PDFs, etc.
+
+        my_chatbot_project/  <-- This is your main project box
+        └── my_documents/    <-- This inner box holds your text files, PDFs, etc.
 
 ### 0.4. Getting a Code Editor (VS Code Recommended):
 •	What is a Code Editor? It's like a specialized word processor for writing computer code. It helps you by coloring code, suggesting completions, and catching errors, making coding much easier.
