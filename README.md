@@ -377,79 +377,89 @@ st.stop(): If Ollama isn't found, the app stops to prevent further errors.
             except Exception as e:
                 st.error(f"An error occurred during document processing: {e}")
                 return None, None
-•	@st.cache_resource: This is a special Streamlit command. It tells Streamlit, "Run this load_and_process_documents function only once when the app first starts. After that, remember its results. If the app restarts or changes slightly, don't re-run this whole long process unless something major changes (like the function's code or its inputs)." This makes your app much faster after the initial setup.
-•	load_and_process_documents(folder_path, embedding_model_name): This function does the heavy lifting of getting your documents ready for the AI.
-o	1. Load Documents:
-	loader_mapping: This is a "dictionary" that tells LangChain which "loader" to use for each file type (e.g., use TextLoader for .txt files, PyPDFLoader for .pdf files).
-	DirectoryLoader: This tool scans your DOCUMENTS_FOLDER (and its subfolders because recursive=True) and uses the correct loader_class to read the content of each file. It converts the files into a format that LangChain can work with.
-	all_documents.extend(loaded_docs): Gathers all the loaded content into one big list.
-o	2. Split Documents into Chunks:
-	RecursiveCharacterTextSplitter: This tool takes the loaded documents and breaks them into smaller pieces (chunks) according to your CHUNK_SIZE and CHUNK_OVERLAP settings. It tries to split intelligently, often by paragraphs or sentences first.
-o	3. Create Embeddings and Store in Vector Store:
-	HuggingFaceEmbeddings(model_name=embedding_model_name): This is where your chosen embedding model (e.g., "all-MiniLM-L6-v2") is loaded. The first time this runs, it will download the actual embedding model files from Hugging Face to your computer.
-	FAISS.from_documents(chunks, embeddings): This is a crucial step!
-	It takes each chunk of text.
-	It uses the embeddings model to convert that text chunk into its numerical "fingerprint" (vector).
-	It then stores all these numerical fingerprints (vectors) in a special database called a Vector Store (FAISS in our case).
-	What is a Vector Store? Imagine a giant digital space where every text chunk's "meaning-fingerprint" (embedding) is placed. Similar meanings are placed close together. A vector store is a super-fast way to store these millions of fingerprints and, more importantly, to quickly find all the fingerprints that are mathematically "close" to a given query's fingerprint. This is how we find relevant document parts.
-	st.spinner(...) and st.success(...): These are Streamlit commands to show you what's happening (a spinning circle while working, then a success message).
-________________________________________
-Python
-# --- Main Application Logic ---
-if not os.path.exists(DOCUMENTS_FOLDER):
-    st.error(f"The documents folder '{DOCUMENTS_FOLDER}' does not exist.")
-    st.info("Please create a folder named 'my_documents' in the same directory as this script and put your files inside.")
-else:
-    # Load and process documents only once when the app starts
-    vector_store, embeddings = load_and_process_documents(DOCUMENTS_FOLDER, EMBEDDING_MODEL_NAME)
+                
+**@st.cache_resource:** This is a special Streamlit command. It tells Streamlit, "Run this load_and_process_documents function only once when the app first starts. After that, remember its results. If the app restarts or changes slightly, don't re-run this whole long process unless something major changes (like the function's code or its inputs)." This makes your app much faster after the initial setup.
 
-    if vector_store:
-        # Initialize the LLM via Ollama
-        llm = ChatOllama(model=OLLAMA_MODEL, temperature=TEMPERATURE)
+**load_and_process_documents(folder_path, embedding_model_name):** This function does the heavy lifting of getting your documents ready for the AI.
+1. Load Documents:
+   
+**loader_mapping:** This is a "dictionary" that tells LangChain which "loader" to use for each file type (e.g., use TextLoader for .txt files, PyPDFLoader for .pdf files).
+**DirectoryLoader:** This tool scans your DOCUMENTS_FOLDER (and its subfolders because recursive=True) and uses the correct loader_class to read the content of each file. It converts the files into a format that LangChain can work with.
+**all_documents.extend(loaded_docs):** Gathers all the loaded content into one big list.
 
-        # Custom prompt template for better control over the LLM's answer
-        custom_prompt_template = """Use the following pieces of context from the documents to answer the user's question.
-        If you don't know the answer based on the provided context, just say that you don't know.
-        Do not try to make up an answer.
-        ----------------
-        Context: {context}
-        Question: {question}
-        Answer:
-        """
-        CUSTOM_PROMPT = PromptTemplate(template=custom_prompt_template, input_variables=["context", "question"])
+2. Split Documents into Chunks:
 
-        # Create the Retrieval QA chain
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=vector_store.as_retriever(),
-            return_source_documents=True,
-            chain_type_kwargs={"prompt": CUSTOM_PROMPT}
-        )
+**RecursiveCharacterTextSplitter:** This tool takes the loaded documents and breaks them into smaller pieces (chunks) according to your CHUNK_SIZE and CHUNK_OVERLAP settings. It tries to split intelligently, often by paragraphs or sentences first.
 
-        # User input for the question
-        user_question = st.text_input("What would you like to know about your documents?", key="user_input")
+3. Create Embeddings and Store in Vector Store:
+   
+**HuggingFaceEmbeddings(model_name=embedding_model_name):** This is where your chosen embedding model (e.g., "all-MiniLM-L6-v2") is loaded. The first time this runs, it will download the actual embedding model files from Hugging Face to your computer.
 
-        if user_question:
-            with st.spinner("Searching and generating answer..."):
-                try:
-                    result = qa_chain.invoke({"query": user_question})
-                    st.subheader("Answer:")
-                    st.write(result["result"])
+**FAISS.from_documents(chunks, embeddings):** This is a crucial step!
+  It takes each chunk of text.    
+  It uses the embeddings model to convert that text chunk into its numerical "fingerprint" (vector).
+  It then stores all these numerical fingerprints (vectors) in a special database called a Vector Store (FAISS in our case).
+        
+**What is a Vector Store?** Imagine a giant digital space where every text chunk's "meaning-fingerprint" (embedding) is placed. Similar meanings are placed close together. A vector store is a super-fast way to store these millions of fingerprints and, more importantly, to quickly find all the fingerprints that are mathematically "close" to a given query's fingerprint. This is how we find relevant document parts.
 
-                    if result.get("source_documents"):
-                        st.subheader("Source Documents:")
-                        for i, doc in enumerate(result["source_documents"]):
-                            source_name = doc.metadata.get('source', 'Unknown Source')
-                            page_label = doc.metadata.get('page', 'N/A')
-                            st.markdown(f"- **Source:** `{os.path.basename(source_name)}` (Page: {page_label})")
+**st.spinner(...) and st.success(...):** These are Streamlit commands to show you what's happening (a spinning circle while working, then a success message).
 
-                except Exception as e:
-                    st.error(f"An error occurred while getting the answer: {e}")
-                    st.warning("Please ensure the Ollama server is running and the model is downloaded correctly.")
-
-    else:
-        st.warning("Chatbot is not ready. Please ensure documents are present and processed successfully.")
+        Python
+        # --- Main Application Logic ---
+        if not os.path.exists(DOCUMENTS_FOLDER):
+            st.error(f"The documents folder '{DOCUMENTS_FOLDER}' does not exist.")
+            st.info("Please create a folder named 'my_documents' in the same directory as this script and put your files inside.")
+        else:
+            # Load and process documents only once when the app starts
+            vector_store, embeddings = load_and_process_documents(DOCUMENTS_FOLDER, EMBEDDING_MODEL_NAME)
+        
+            if vector_store:
+                # Initialize the LLM via Ollama
+                llm = ChatOllama(model=OLLAMA_MODEL, temperature=TEMPERATURE)
+        
+                # Custom prompt template for better control over the LLM's answer
+                custom_prompt_template = """Use the following pieces of context from the documents to answer the user's question.
+                If you don't know the answer based on the provided context, just say that you don't know.
+                Do not try to make up an answer.
+                ----------------
+                Context: {context}
+                Question: {question}
+                Answer:
+                """
+                CUSTOM_PROMPT = PromptTemplate(template=custom_prompt_template, input_variables=["context", "question"])
+        
+                # Create the Retrieval QA chain
+                qa_chain = RetrievalQA.from_chain_type(
+                    llm=llm,
+                    chain_type="stuff",
+                    retriever=vector_store.as_retriever(),
+                    return_source_documents=True,
+                    chain_type_kwargs={"prompt": CUSTOM_PROMPT}
+                )
+        
+                # User input for the question
+                user_question = st.text_input("What would you like to know about your documents?", key="user_input")
+        
+                if user_question:
+                    with st.spinner("Searching and generating answer..."):
+                        try:
+                            result = qa_chain.invoke({"query": user_question})
+                            st.subheader("Answer:")
+                            st.write(result["result"])
+        
+                            if result.get("source_documents"):
+                                st.subheader("Source Documents:")
+                                for i, doc in enumerate(result["source_documents"]):
+                                    source_name = doc.metadata.get('source', 'Unknown Source')
+                                    page_label = doc.metadata.get('page', 'N/A')
+                                    st.markdown(f"- **Source:** `{os.path.basename(source_name)}` (Page: {page_label})")
+        
+                        except Exception as e:
+                            st.error(f"An error occurred while getting the answer: {e}")
+                            st.warning("Please ensure the Ollama server is running and the model is downloaded correctly.")
+        
+            else:
+                st.warning("Chatbot is not ready. Please ensure documents are present and processed successfully.")
 •	if not os.path.exists(DOCUMENTS_FOLDER):: This checks if your my_documents folder actually exists. If not, it shows an error in the app.
 •	vector_store, embeddings = load_and_process_documents(...): This calls our function to get the documents ready.
 •	if vector_store:: This makes sure that the document processing was successful before trying to set up the chatbot.
