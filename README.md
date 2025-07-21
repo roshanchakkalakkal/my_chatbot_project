@@ -223,140 +223,160 @@ This is where you give your chatbot the information it will learn from.
 ## Step 4: Write the Chatbot Code (The Brains of the Operation)
 Now we'll write the Python code that puts all these pieces together.
 
-•	Where to write it: In VS Code, open the app.py file that you should have created in my_chatbot_project. If you haven't, right-click in the Explorer panel (left side of VS Code), select "New File," and name it app.py.
+### Where to write it: 
+In VS Code, open the app.py file that you should have created in my_chatbot_project. If you haven't, right-click in the Explorer panel (left side of VS Code), select "New File," and name it app.py.
 
-•	Copy and paste the entire code provided in the previous response into this app.py file.
+Copy and paste the entire code provided in the in the app.py file.
+
 Let's break down that code section by section:
 
         Python
         import streamlit as st
         import os
 
-# LangChain components for document processing and QA
-from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings, ChatOllama # Updated imports for local models
-from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
-•	import ...: These lines are like saying, "Hey Python, I'm going to use tools from these specific toolboxes (libraries)." Each import brings in a set of related functions.
-o	streamlit as st: Imports the Streamlit library and gives it a shorter name st for convenience.
-o	os: This is a built-in Python library that helps us interact with your computer's operating system, like checking if a folder exists.
-o	The langchain_... imports bring in specific parts of the LangChain framework for loading documents, splitting text, creating embeddings, connecting to Ollama, and building the "chain" that links everything together.
-________________________________________
-Python
-# --- Configuration ---
-DOCUMENTS_FOLDER = "./my_documents"
-OLLAMA_MODEL = "llama3" # Ensure you have downloaded this model via `ollama run llama3`
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2" # A good, small, fast embedding model
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
-TEMPERATURE = 0.7 # Controls creativity of LLM (0.0 for factual, higher for more creative)
-•	DOCUMENTS_FOLDER = "./my_documents": This tells our code where to find your documents. ./ means "in the same folder as this app.py file."
-•	OLLAMA_MODEL = "llama3": This is the name of the LLM you downloaded with Ollama (in Step 1.2). If you downloaded a different model (e.g., mistral), you would change this line.
-•	EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2": This is the specific "embedding model" we'll use.
-o	What is an Embedding Model? Imagine every word or sentence has a "meaning." An embedding model converts this meaning into a list of numbers (a "vector"). Sentences with similar meanings will have vectors that are "close" to each other in a mathematical sense.
-o	Why do we need it? When you ask a question, your question also gets turned into an embedding. Then, we can quickly search your documents' embeddings to find which parts of your documents have meanings similar to your question. This is much smarter than just searching for keywords.
-o	"sentence-transformers/all-MiniLM-L6-v2" is a specific, widely used, and efficient model from a collection called "sentence-transformers" on Hugging Face. Hugging Face is a huge hub for open-source AI models.
-•	CHUNK_SIZE = 1000 & CHUNK_OVERLAP = 200:
-o	What is Chunking? Large documents (like a 100-page PDF) are too big for LLMs to read all at once. So, we break them into smaller, manageable "chunks" or "pieces." CHUNK_SIZE is roughly how many characters each piece will be.
-o	What is Chunk Overlap? Imagine breaking a sentence: "The cat sat on the mat. It was a fluffy cat." If you chunked perfectly in the middle, "mat" and "It" might be in different chunks. CHUNK_OVERLAP means we'll add a little bit of the end of one chunk to the beginning of the next. This helps ensure that important information isn't accidentally cut off at the edges of a chunk, maintaining context.
-•	TEMPERATURE = 0.7: This setting controls how "creative" or "random" the LLM's answers are.
-o	0.0 means the most factual, least creative answer (always trying to give the most likely word).
-o	Higher values (like 0.7 or 1.0) make the answers more varied and potentially more imaginative, but can also sometimes lead to less factual or "hallucinated" answers. For a Q&A system, 0.7 is a good balance.
-________________________________________
-Python
-# --- Streamlit UI ---
-st.set_page_config(page_title="My Local Document Chatbot", layout="wide")
-st.title("📚 My Local Document Chatbot (Open Source)")
-st.markdown(f"""
-Ask me questions about the documents in your `{DOCUMENTS_FOLDER}` folder!
-Using **Ollama ({OLLAMA_MODEL})** for answers and **Hugging Face ({EMBEDDING_MODEL_NAME})** for document understanding.
-""")
-•	st.set_page_config(...): Configures how your web page looks (title, layout).
-•	st.title(...): Displays a big title on your web page.
-•	st.markdown(...): Displays formatted text (like notes or explanations) on your web page.
-________________________________________
-Python
-# --- Check Ollama Server Status ---
-def check_ollama_status():
-    try:
-        import requests
-        requests.get("http://localhost:11434/api/tags", timeout=1)
-        return True
-    except requests.exceptions.ConnectionError:
-        return False
-    except Exception as e:
-        st.error(f"Error checking Ollama status: {e}")
-        return False
+        #LangChain components for document processing and QA
+        from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
+        from langchain.text_splitter import RecursiveCharacterTextSplitter
+        from langchain_huggingface import HuggingFaceEmbeddings, ChatOllama # Updated imports for local models
+        from langchain_community.vectorstores import FAISS
+        from langchain.chains import RetrievalQA
+        from langchain.prompts import PromptTemplate
+#### import ...: 
+These lines are like saying, "Hey Python, I'm going to use tools from these specific toolboxes (libraries)." Each import brings in a set of related functions.
 
-if not check_ollama_status():
-    st.error("Ollama server is not running or not accessible. Please ensure Ollama is installed and running.")
-    st.markdown("You can download Ollama from [ollama.com/download](https://ollama.com/download).")
-    st.markdown(f"After installing, run `ollama run {OLLAMA_MODEL}` in your terminal to download the model and start the server.")
-    st.stop() # Stop the Streamlit app if Ollama isn't running
-•	check_ollama_status() function: This is a small helper function.
-o	It tries to quickly connect to the Ollama server (which usually runs on http://localhost:11434).
-o	If it can connect, it means Ollama is running, which is good!
-o	If it can't connect, it shows an error message in your web app and tells you what to do (like making sure Ollama is installed and running ollama run llama3). This is important because the whole chatbot depends on Ollama being available.
-o	st.stop(): If Ollama isn't found, the app stops to prevent further errors.
-________________________________________
-Python
-# --- Function to Load and Process Documents ---
-@st.cache_resource # Cache this function to run only once
-def load_and_process_documents(folder_path, embedding_model_name):
-    st.info("Loading and processing documents... This might take a moment.")
-    try:
-        # 1. Load Documents
-        loader_mapping = {
-            ".txt": TextLoader,
-            ".pdf": PyPDFLoader,
-        }
+**streamlit as st:** Imports the Streamlit library and gives it a shorter name st for convenience.
 
-        all_documents = []
-        for ext, loader_class in loader_mapping.items():
-            loader = DirectoryLoader(
-                folder_path,
-                glob=f"**/*{ext}",
-                loader_cls=loader_class,
-                recursive=True,
-                silent_errors=True
-            )
+**os:** This is a built-in Python library that helps us interact with your computer's operating system, like checking if a folder exists.
+
+**The langchain_...** imports bring in specific parts of the LangChain framework for loading documents, splitting text, creating embeddings, connecting to Ollama, and building the "chain" that links everything together.
+
+        Python
+        # --- Configuration ---
+        DOCUMENTS_FOLDER = "./my_documents"
+        OLLAMA_MODEL = "llama3" # Ensure you have downloaded this model via `ollama run llama3`
+        EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2" # A good, small, fast embedding model
+        CHUNK_SIZE = 1000
+        CHUNK_OVERLAP = 200
+        TEMPERATURE = 0.7 # Controls creativity of LLM (0.0 for factual, higher for more creative)
+**DOCUMENTS_FOLDER = "./my_documents":** This tells our code where to find your documents. ./ means "in the same folder as this app.py file."
+
+**OLLAMA_MODEL = "llama3":** This is the name of the LLM you downloaded with Ollama (in Step 1.2). If you downloaded a different model (e.g., mistral), you would change this line.
+
+**EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2":** This is the specific "embedding model" we'll use.
+
+**What is an Embedding Model?** Imagine every word or sentence has a "meaning." An embedding model converts this meaning into a list of numbers (a "vector"). Sentences with similar meanings will have vectors that are "close" to each other in a mathematical sense.
+        
+**Why do we need it?** When you ask a question, your question also gets turned into an embedding. Then, we can quickly search your documents' embeddings to find which parts of your documents have meanings similar to your question. This is much smarter than just searching for keywords.
+        
+"sentence-transformers/all-MiniLM-L6-v2" is a specific, widely used, and efficient model from a collection called "sentence-transformers" on Hugging Face. Hugging Face is a huge hub for open-source AI models.
+        
+**CHUNK_SIZE = 1000 & CHUNK_OVERLAP = 200:**
+
+**What is Chunking?** Large documents (like a 100-page PDF) are too big for LLMs to read all at once. So, we break them into smaller, manageable "chunks" or "pieces." CHUNK_SIZE is roughly how many characters each piece will be.
+
+**What is Chunk Overlap?** Imagine breaking a sentence: "The cat sat on the mat. It was a fluffy cat." If you chunked perfectly in the middle, "mat" and "It" might be in different chunks. CHUNK_OVERLAP means we'll add a little bit of the end of one chunk to the beginning of the next. This helps ensure that important information isn't accidentally cut off at the edges of a chunk, maintaining context.
+
+**TEMPERATURE = 0.7:** This setting controls how "creative" or "random" the LLM's answers are.
+0.0 means the most factual, least creative answer (always trying to give the most likely word).
+Higher values (like 0.7 or 1.0) make the answers more varied and potentially more imaginative, but can also sometimes lead to less factual or "hallucinated" answers. For a Q&A system, 0.7 is a good balance.
+
+        Python
+        # --- Streamlit UI ---
+        st.set_page_config(page_title="My Local Document Chatbot", layout="wide")
+        st.title("📚 My Local Document Chatbot (Open Source)")
+        st.markdown(f"""
+        Ask me questions about the documents in your `{DOCUMENTS_FOLDER}` folder!
+        Using **Ollama ({OLLAMA_MODEL})** for answers and **Hugging Face ({EMBEDDING_MODEL_NAME})** for document understanding.
+        """)
+
+**st.set_page_config(...):** Configures how your web page looks (title, layout).
+**st.title(...):** Displays a big title on your web page.
+**st.markdown(...):** Displays formatted text (like notes or explanations) on your web page.
+
+        Python
+        # --- Check Ollama Server Status ---
+        def check_ollama_status():
             try:
-                loaded_docs = loader.load()
-                all_documents.extend(loaded_docs)
-                st.success(f"Loaded {len(loaded_docs)} '{ext}' documents.")
+                import requests
+                requests.get("http://localhost:11434/api/tags", timeout=1)
+                return True
+            except requests.exceptions.ConnectionError:
+                return False
             except Exception as e:
-                st.warning(f"Could not load '{ext}' files: {e}")
+                st.error(f"Error checking Ollama status: {e}")
+                return False
+        
+        if not check_ollama_status():
+            st.error("Ollama server is not running or not accessible. Please ensure Ollama is installed and running.")
+            st.markdown("You can download Ollama from [ollama.com/download](https://ollama.com/download).")
+            st.markdown(f"After installing, run `ollama run {OLLAMA_MODEL}` in your terminal to download the model and start the server.")
+            st.stop() # Stop the Streamlit app if Ollama isn't running
+            
+**check_ollama_status() function:** This is a small helper function.
+It tries to quickly connect to the Ollama server (which usually runs on http://localhost:11434).
 
-        if not all_documents:
-            st.error(f"No documents found or loaded from '{folder_path}'. Please check the folder and file types.")
-            return None, None
+If it can connect, it means Ollama is running, which is good!
 
-        # 2. Split Documents into Chunks
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=CHUNK_SIZE,
-            chunk_overlap=CHUNK_OVERLAP,
-            length_function=len,
-            is_separator_regex=False,
-        )
-        chunks = text_splitter.split_documents(all_documents)
-        st.info(f"Split documents into {len(chunks)} text chunks.")
+If it can't connect, it shows an error message in your web app and tells you what to do (like making sure Ollama is installed and running ollama run llama3). This is important because the whole chatbot depends on Ollama being available.
 
-        # 3. Create Embeddings and Store in Vector Store
-        with st.spinner(f"Downloading and initializing embedding model ({embedding_model_name})..."):
-            embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-        st.success("Embedding model initialized.")
+st.stop(): If Ollama isn't found, the app stops to prevent further errors.
 
-        with st.spinner("Creating document embeddings and storing in FAISS..."):
-            vector_store = FAISS.from_documents(chunks, embeddings)
-        st.success("Document embeddings created and stored in FAISS vector store.")
-
-        return vector_store, embeddings
-
-    except Exception as e:
-        st.error(f"An error occurred during document processing: {e}")
-        return None, None
+        Python
+        # --- Function to Load and Process Documents ---
+        @st.cache_resource # Cache this function to run only once
+        def load_and_process_documents(folder_path, embedding_model_name):
+            st.info("Loading and processing documents... This might take a moment.")
+            try:
+                # 1. Load Documents
+                loader_mapping = {
+                    ".txt": TextLoader,
+                    ".pdf": PyPDFLoader,
+                }
+        
+                all_documents = []
+                for ext, loader_class in loader_mapping.items():
+                    loader = DirectoryLoader(
+                        folder_path,
+                        glob=f"**/*{ext}",
+                        loader_cls=loader_class,
+                        recursive=True,
+                        silent_errors=True
+                    )
+                    try:
+                        loaded_docs = loader.load()
+                        all_documents.extend(loaded_docs)
+                        st.success(f"Loaded {len(loaded_docs)} '{ext}' documents.")
+                    except Exception as e:
+                        st.warning(f"Could not load '{ext}' files: {e}")
+        
+                if not all_documents:
+                    st.error(f"No documents found or loaded from '{folder_path}'. Please check the folder and file types.")
+                    return None, None
+        
+                # 2. Split Documents into Chunks
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=CHUNK_SIZE,
+                    chunk_overlap=CHUNK_OVERLAP,
+                    length_function=len,
+                    is_separator_regex=False,
+                )
+                chunks = text_splitter.split_documents(all_documents)
+                st.info(f"Split documents into {len(chunks)} text chunks.")
+        
+                # 3. Create Embeddings and Store in Vector Store
+                with st.spinner(f"Downloading and initializing embedding model ({embedding_model_name})..."):
+                    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+                st.success("Embedding model initialized.")
+        
+                with st.spinner("Creating document embeddings and storing in FAISS..."):
+                    vector_store = FAISS.from_documents(chunks, embeddings)
+                st.success("Document embeddings created and stored in FAISS vector store.")
+        
+                return vector_store, embeddings
+        
+            except Exception as e:
+                st.error(f"An error occurred during document processing: {e}")
+                return None, None
 •	@st.cache_resource: This is a special Streamlit command. It tells Streamlit, "Run this load_and_process_documents function only once when the app first starts. After that, remember its results. If the app restarts or changes slightly, don't re-run this whole long process unless something major changes (like the function's code or its inputs)." This makes your app much faster after the initial setup.
 •	load_and_process_documents(folder_path, embedding_model_name): This function does the heavy lifting of getting your documents ready for the AI.
 o	1. Load Documents:
