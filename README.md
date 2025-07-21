@@ -105,8 +105,8 @@ Your folder structure should look like this (like a nested set of boxes):
 
 1.	Open the Terminal in VS Code: In VS Code, go to the Terminal menu (at the top) > New Terminal. This opens a terminal panel at the bottom of VS Code, and it will automatically be "inside" your my_chatbot_project folder.
 2.	Create the virtual environment: In the VS Code terminal, type this command and press Enter:
-Bash
-python -m venv venv
+        Bash
+        python -m venv venv
 This creates a new subfolder named venv inside your my_chatbot_project folder. This venv folder contains all the isolated Python stuff for this project.
 3.	Activate the virtual environment: This tells your terminal to use the tools from this project's specific toolbox.
 
@@ -132,29 +132,30 @@ Both the commands can be executed from VS Code terminal itself
 
 4.	Verify Activation: You'll know it's active when you see (venv) appear at the beginning of your terminal prompt. For example: (venv) C:\my_chatbot_project>.
 From now on, always make sure (venv) is visible in your terminal before running any commands for this project!
-Step 1: Install and Set Up Ollama (Your Local AI Brain)
+
+## Step 1: Install and Set Up Ollama (Your Local AI Brain)
 Since we're going with free and open-source, Ollama is our star. It makes it super easy to run powerful AI models right on your own computer.
 
 •	What is Ollama? 
 
 Ollama is like a friendly assistant that helps you download, manage, and run large language models (LLMs) directly on your computer. Instead of sending your data to a company's servers to be processed by their AI, Ollama lets you keep everything local and private. It simplifies a lot of complex technical stuff.
 
-•	1.1. Download and Install Ollama:
+### 1.1. Download and Install Ollama:
 1.	Open your web browser and go to the official Ollama website: https://ollama.com/download
 2.	Download the installer for your operating system (Windows, macOS, or Linux).
 3.	Run the installer: Double-click the downloaded file and follow the on-screen instructions to install Ollama. It typically installs itself as a background service, meaning it runs quietly in the background, ready when you need it.
 
-•	1.2. Download an LLM (Large Language Model) using Ollama:
+### 1.2. Download an LLM (Large Language Model) using Ollama:
 
-o	What is an LLM? 
+#### What is an LLM? 
 
 An LLM (Large Language Model) is the "brain" of our chatbot. It's a type of AI that has been trained on a massive amount of text from the internet (books, articles, websites, etc.). This training allows it to understand and generate human-like text, answer questions, summarize, translate, and much more. Think of it as having read almost everything on the internet.
 
-o	Why download one? 
+#### Why download one? 
 
 The models are large files (several gigabytes), so we need to download one that Ollama can use.
 
-o	How to download:
+#### How to download:
 
 1.	Open a new Terminal (macOS/Linux) or Command Prompt (Windows). This is your system's terminal, not necessarily the one inside VS Code, as Ollama runs independently.
 2.	Type the following command and press Enter:
@@ -163,49 +164,73 @@ o	How to download:
         ollama run llama3
   	
 3.	ollama run llama3 explained:
-	ollama: This is the command to tell the Ollama program to do something.
-	run: This tells Ollama to start a model.
-	llama3: This is the name of the specific LLM we want to use. Llama 3 is a powerful, open-source model developed by Meta (Facebook's parent company). It's a good balance of capability and size for getting started.
-	What happens next: Ollama will start downloading the llama3 model. This will show you progress like pulling manifest, pulling ... layers. This can take quite a while, depending on your internet speed, as the model is large (around 4.7 GB).
-	Once downloaded: After the download is complete, Ollama will automatically start an interactive chat session with the llama3 model. You'll see a prompt where you can type. You can type hi and press Enter to test it.
-	Exit the session: Type /bye and press Enter to exit the interactive chat.
+
+  	**ollama:** This is the command to tell the Ollama program to do something.
+
+  	**run:** This tells Ollama to start a model.
+
+  	**llama3:** This is the name of the specific LLM we want to use. Llama 3 is a powerful, open-source model developed by         Meta (Facebook's parent company). It's a good balance of capability and size for getting started.
+
+  	**What happens next:** Ollama will start downloading the llama3 model. This will show you progress like pulling manifest, pulling ... layers. This can take quite a while, depending on your internet speed, as the model is large (around 4.7 GB).
+  	
+  	**Once downloaded:** After the download is complete, Ollama will automatically start an interactive chat session with the llama3 model. You'll see a prompt where you can type. You can type hi and press Enter to test it.
+
+  	**Exit the session:** Type /bye and press Enter to exit the interactive chat.
 4.	Keep Ollama running: After you exit the interactive session, the Ollama server usually continues to run in the background. This is important because our Python code will connect to this running server to use the llama3 model.
-Step 2: Install Necessary Python Libraries (Our AI Tools)
+
+## Step 2: Install Necessary Python Libraries (Our AI Tools)
 Now we'll install the specific Python "tools" (libraries) that our chatbot code needs to function. These are like specialized toolkits for Python.
-•	Why install them? Python itself is just the language. These libraries add extra capabilities, like reading PDFs, doing smart text searches, and connecting to AI models.
-•	How to install:
+### Why install them? 
+Python itself is just the language. These libraries add extra capabilities, like reading PDFs, doing smart text searches, and connecting to AI models.
+### How to install:
 1.	Go back to your VS Code terminal.
 2.	Make sure your virtual environment is active! (You should see (venv) at the beginning of the prompt). If not, activate it again (refer to Step 0.5).
 3.	Type the following command and press Enter:
-Bash
-pip install langchain-community langchain-huggingface faiss-cpu pypdf streamlit
-o	What each library does:
-	langchain-community: This is part of the "LangChain" framework. LangChain is like a master toolbox for building applications with LLMs. This specific part has tools for loading documents and working with vector stores (more on these soon!).
-	langchain-huggingface: This connects LangChain to models available through Hugging Face. We'll use it to connect to Ollama (for our LLM) and to download a local embedding model (more on embeddings next!).
-	faiss-cpu: This is Facebook AI Similarity Search. It's an incredibly fast library that helps us search through huge amounts of numerical data (our "embeddings") to find things that are "similar." It's our "vector store" for quick lookups. The -cpu part means it uses your computer's main processor (CPU), not a specialized graphics card (GPU).
-	pypdf: This library is specifically for reading and extracting text from PDF files.
-	streamlit: This library makes it incredibly easy to turn our Python code into a simple, interactive web application (our chatbot's user interface). You don't need to know web design; Streamlit handles it all!
-Step 3: Prepare Your Documents (The Chatbot's Knowledge Base)
+   
+        Bash
+        pip install langchain-community langchain-huggingface faiss-cpu pypdf streamlit
+  	
+#### What each library does:
+
+**langchain-community:** This is part of the "LangChain" framework. LangChain is like a master toolbox for building applications with LLMs. This specific part has tools for loading documents and working with vector stores (more on these soon!).
+
+**langchain-huggingface:** This connects LangChain to models available through Hugging Face. We'll use it to connect to Ollama (for our LLM) and to download a local embedding model (more on embeddings next!).
+
+**faiss-cpu:** This is Facebook AI Similarity Search. It's an incredibly fast library that helps us search through huge amounts of numerical data (our "embeddings") to find things that are "similar." It's our "vector store" for quick lookups. The -cpu part means it uses your computer's main processor (CPU), not a specialized graphics card (GPU).
+
+**pypdf:** This library is specifically for reading and extracting text from PDF files.
+
+**streamlit:** This library makes it incredibly easy to turn our Python code into a simple, interactive web application (our chatbot's user interface). You don't need to know web design; Streamlit handles it all!
+
+## Step 3: Prepare Your Documents (The Chatbot's Knowledge Base)
 This is where you give your chatbot the information it will learn from.
-•	What to do:
+### What to do:
 1.	Go to the my_documents folder you created inside your my_chatbot_project folder.
 2.	Place some documents inside this folder. You can use:
-	.txt files (simple text files)
-	.pdf files (Portable Document Format)
-	You can even create subfolders within my_documents (e.g., my_documents/recipes/, my_documents/reports/) – the chatbot will look in those too!
-o	Examples of what you could put:
+
+  	.txt files (simple text files)
+
+  	.pdf files (Portable Document Format)
+
+  	You can even create subfolders within my_documents (e.g., my_documents/recipes/, my_documents/reports/) – the chatbot will look in those too!
+  	
+#### Examples of what you could put:
 	A .txt file with your class notes.
 	A PDF of a user manual for a gadget.
 	A document summarizing a project.
 	A collection of articles you're interested in.
-Step 4: Write the Chatbot Code (The Brains of the Operation)
+
+## Step 4: Write the Chatbot Code (The Brains of the Operation)
 Now we'll write the Python code that puts all these pieces together.
+
 •	Where to write it: In VS Code, open the app.py file that you should have created in my_chatbot_project. If you haven't, right-click in the Explorer panel (left side of VS Code), select "New File," and name it app.py.
+
 •	Copy and paste the entire code provided in the previous response into this app.py file.
 Let's break down that code section by section:
-Python
-import streamlit as st
-import os
+
+        Python
+        import streamlit as st
+        import os
 
 # LangChain components for document processing and QA
 from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
